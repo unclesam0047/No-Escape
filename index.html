@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>NO ESCAPE: 2D Carnival Maze &amp; Worldwide Multiplayer</title>
+    <meta
+      name="description"
+      content="Navigate procedural 2D carnival mazes, leap over spinning sawblades, outrun the Ringmaster, and race players worldwide on mobile or desktop."
+    />
+    <meta name="theme-color" content="#080816" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="apple-mobile-web-app-title" content="NO ESCAPE" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+
+    <!-- OpenGraph Social Preview Card -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="NO ESCAPE" />
+    <meta
+      property="og:title"
+      content="NO ESCAPE: 2D Carnival Maze & Worldwide Multiplayer"
+    />
+    <meta
+      property="og:description"
+      content="Navigate procedural 2D carnival mazes, leap over spinning sawblades, outrun the Ringmaster, and race players worldwide on mobile or desktop."
+    />
+    <meta property="og:image" content="/preview.jpg" />
+    <meta property="og:image:width" content="1280" />
+    <meta property="og:image:height" content="720" />
+    <meta
+      property="og:image:alt"
+      content="NO ESCAPE 2D Carnival Maze gameplay preview showing neon labyrinth corridors, coins, traps, and exit portal"
+    />
+
+    <!-- Twitter / X Preview Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="NO ESCAPE: 2D Carnival Maze & Worldwide Multiplayer"
+    />
+    <meta
+      name="twitter:description"
+      content="Navigate procedural 2D carnival mazes, leap over spinning sawblades, and race players worldwide on any device."
+    />
+    <meta name="twitter:image" content="/preview.jpg" />
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "NO ESCAPE: 2D Carnival Maze",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "All",
+        "description": "Installable 2D carnival maze escape game with procedural labyrinths, offline solo modes, and real-time worldwide multiplayer races.",
+        "image": "/preview.jpg",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

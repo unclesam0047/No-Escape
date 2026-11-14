@@ -1,0 +1,6 @@
+{
+  "name": "NO ESCAPE: 3D Carnival Run & Worldwide Multiplayer",
+  "description": "An electrifying 3D carnival escape runner game with procedural tracks, Ringmaster challenges, global real-time multiplayer races, and worldwide leaderboards.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

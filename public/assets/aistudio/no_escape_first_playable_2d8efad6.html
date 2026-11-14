@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>NO ESCAPE — 3D Carnival Challenge</title>
+<style>
+:root{--pink:#ff3ea5;--gold:#ffd66b;--cyan:#55eaff;--dark:#080817}
+*{box-sizing:border-box}body{margin:0;background:#080817;color:white;font-family:system-ui,Segoe UI,sans-serif;overflow:hidden}
+#game{position:fixed;inset:0}canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none;padding:14px;display:flex;flex-direction:column;justify-content:space-between;text-shadow:0 2px 5px #000}
+.top{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}.pill{background:#10102ddd;border:1px solid #ffffff35;border-radius:14px;padding:9px 13px;font-weight:700;box-shadow:0 5px 20px #0006}
+#mission{max-width:360px;color:#ffe8a8}#clown{position:fixed;left:50%;top:13%;transform:translateX(-50%);width:min(460px,90vw);text-align:center;background:linear-gradient(120deg,#42145eec,#11152bed);border:2px solid var(--pink);border-radius:20px;padding:13px 18px;box-shadow:0 0 30px #ff3ea577;pointer-events:none;display:none}
+#clown strong{color:#ff8bd0;font-size:19px}#clown p{margin:5px 0 0}
+#overlay{position:fixed;inset:0;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#38134b99,#070711f2 70%);padding:18px;z-index:5}
+.panel{width:min(620px,96vw);background:#101020ee;border:1px solid #ffffff35;border-radius:24px;padding:24px;box-shadow:0 20px 80px #000b;text-align:center}
+h1{font-size:clamp(38px,8vw,70px);line-height:1;margin:8px 0;color:#ff65b7;text-shadow:0 0 22px #ff3ea5} .subtitle{color:#d8d6ee}
+button,select{border:0;border-radius:12px;padding:12px 16px;font-weight:800;font-size:15px;cursor:pointer;margin:5px}
+button{background:linear-gradient(120deg,#ff3ea5,#8b5cff);color:white;box-shadow:0 5px 18px #ff3ea544}button.secondary{background:#292943;color:#fff;border:1px solid #ffffff30}
+#controls{position:fixed;bottom:18px;left:18px;right:18px;display:flex;justify-content:space-between;pointer-events:none}
+.pad{display:grid;grid-template-columns:repeat(3,52px);gap:5px;pointer-events:auto}.pad button,.jump{height:48px;background:#17172dcc;border:1px solid #ffffff55;touch-action:none}
+.jump{width:76px;height:76px;border-radius:50%;align-self:end;background:#ff3ea5cc}
+#notice{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);font-weight:900;font-size:22px;color:#ffe58b;text-shadow:0 3px 8px #000;pointer-events:none;text-align:center}
+#bar{height:8px;background:#ffffff25;border-radius:8px;overflow:hidden;margin-top:5px}#progress{height:100%;width:0;background:linear-gradient(90deg,#55eaff,#ff3ea5)}
+.hidden{display:none!important}
+@media(max-width:600px){.pill{font-size:12px;padding:7px 9px}.panel{padding:18px}#controls{bottom:12px}}
+</style>
+</head>
+<body>
+<div id="game"></div>
+<div id="hud">
+ <div class="top">
+  <div class="pill">❤️ Lives: <span id="lives">3</span> &nbsp; 🪙 Coins: <span id="coins">0</span></div>
+  <div class="pill" id="mission">MISSION: Reach the exit gate!</div>
+  <div class="pill">⏱ <span id="timer">0</span>s &nbsp; ⭐ <span id="level">1</span></div>
+ </div>
+ <div class="pill" style="align-self:flex-start;width:180px">LEVEL PROGRESS<div id="bar"><div id="progress"></div></div></div>
+</div>
+<div id="clown"><strong>🤡 THE RINGMASTER</strong><p id="clownText">Welcome to NO ESCAPE!</p></div>
+<div id="notice"></div>
+<div id="controls" class="hidden">
+ <div class="pad">
+  <span></span><button data-key="ArrowUp">▲</button><span></span>
+  <button data-key="ArrowLeft">◀</button><button data-key="ArrowDown">▼</button><button data-key="ArrowRight">▶</button>
+ </div>
+ <button class="jump" id="jump">JUMP!</button>
+</div>
+<div id="overlay"><div class="panel">
+ <div style="font-size:48px">🎪🤡🎪</div><h1>NO ESCAPE</h1>
+ <p class="subtitle">You entered for fun. Now find your way out!</p>
+ <p>Run, jump, dodge surprise traps and listen carefully when the Ringmaster appears.</p>
+ <label for="mode">CHOOSE YOUR MODE </label><br>
+ <select id="mode"><option value="adventure">Adventure — explore and escape</option><option value="survival">Survival — endless waves</option><option value="challenge">Challenge — beat the clock</option><option value="mystery">Mystery — surprise events</option></select>
+ <br><button id="start">START GAME</button>
+ <p style="font-size:12px;color:#aaa">Computer: WASD / arrow keys to move, Space to jump. Phone/tablet: use on-screen controls.</p>
+ </div></div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+const host=document.querySelector('#game');
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x090817);scene.fog=new THREE.Fog(0x090817,18,75);
+const camera=new THREE.PerspectiveCamera(65,innerWidth/innerHeight,.1,150);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0x9dbaff,0x25102e,2));
+const keyLight=new THREE.DirectionalLight(0xffffff,2.4);keyLight.position.set(-8,15,8);keyLight.castShadow=true;scene.add(keyLight);
+function glow(color,intensity=2){const l=new THREE.PointLight(color,intensity,24);scene.add(l);return l}
+const pink=glow(0xff2a9d,3),blue=glow(0x36dfff,2.5);
+const mat=(c,rough=.65,metal=0)=>new THREE.MeshStandardMaterial({color:c,roughness:rough,metalness:metal});
+const floorMat=mat(0x29233f),gold=mat(0xffc84a,.3,.4),neon=mat(0xff39ad,.25,.2),cyan=mat(0x35eaff,.25,.2);
+const floor=new THREE.Mesh(new THREE.BoxGeometry(16,.5,100),floorMat);floor.position.set(0,-.45,-42);floor.receiveShadow=true;scene.add(floor);
+for(let x of [-8.1,8.1]){let wall=new THREE.Mesh(new THREE.BoxGeometry(.5,2,100),mat(0x17152c));wall.position.set(x,.55,-42);scene.add(wall)}
+// Carnival arches and lamps
+for(let z=4;z>-92;z-=12){let arch=new THREE.Group();let a=new THREE.Mesh(new THREE.TorusGeometry(5,.13,8,40,Math.PI),neon);a.rotation.z=Math.PI; a.position.y=3.1;arch.add(a);for(let x of [-5,5]){let p=new THREE.Mesh(new THREE.CylinderGeometry(.15,.2,3.2,10),gold);p.position.set(x,1.4,0);arch.add(p)}arch.position.z=z;scene.add(arch);let orb=new THREE.Mesh(new THREE.SphereGeometry(.22,12,12),cyan);orb.position.set(0,4,z);scene.add(orb)}
+// player
+const player=new THREE.Group();const body=new THREE.Mesh(new THREE.CapsuleGeometry(.42,.75,5,10),mat(0x39bfff));body.position.y=.85;body.castShadow=true;player.add(body);
+const head=new THREE.Mesh(new THREE.SphereGeometry(.36,20,16),mat(0xffd2b0));head.position.y=1.55;player.add(head);
+const visor=new THREE.Mesh(new THREE.BoxGeometry(.42,.12,.12),mat(0x17172b));visor.position.set(0,1.58,.31);player.add(visor);
+const backpack=new THREE.Mesh(new THREE.BoxGeometry(.5,.55,.25),mat(0xff3ea5));backpack.position.set(0,.95,-.42);player.add(backpack);player.position.set(0,0,5);scene.add(player);
+const clown=new THREE.Group();const cb=new THREE.Mesh(new THREE.CapsuleGeometry(.55,.75,5,12),mat(0x7c36d8));cb.position.y=1;clown.add(cb);const ch=new THREE.Mesh(new THREE.SphereGeometry(.48,20,16),mat(0xffe0c5));ch.position.y=1.95;clown.add(ch);
+for(let x of [-.36,.36]){let hat=new THREE.Mesh(new THREE.ConeGeometry(.23,.65,12),neon);hat.position.set(x,2.55,0);hat.rotation.z=x*.7;clown.add(hat)}
+const nose=new THREE.Mesh(new THREE.SphereGeometry(.13,12,12),mat(0xff2222));nose.position.set(0,1.95,.44);clown.add(nose);clown.position.set(0,0,-13);clown.visible=false;scene.add(clown);
+// obstacles, coins, exit
+const obstacles=[],collectibles=[];const boxGeo=new THREE.BoxGeometry(1.5,1.1,1.2);
+for(let i=0;i<18;i++){let z=-8-i*4.4;let o=new THREE.Mesh(i%3===0?new THREE.TorusGeometry(.85,.25,8,18):boxGeo,i%2?neon:gold);o.position.set((Math.random()-.5)*10,.8,z);o.castShadow=true;scene.add(o);obstacles.push({mesh:o,baseX:o.position.x,z,phase:Math.random()*6,kind:i%3})}
+for(let i=0;i<30;i++){let c=new THREE.Mesh(new THREE.TorusGeometry(.34,.12,8,18),gold);c.position.set((Math.random()-.5)*11,1.1,-5-i*2.6);scene.add(c);collectibles.push(c)}
+const gate=new THREE.Group();for(let x of [-2,2]){let p=new THREE.Mesh(new THREE.BoxGeometry(.25,4,.3),neon);p.position.set(x,2,0);gate.add(p)}let top=new THREE.Mesh(new THREE.BoxGeometry(4.2,.25,.3),gold);top.position.y=4;gate.add(top);gate.position.set(0,0,-88);scene.add(gate);
+let keys={},running=false,startedAt=0,last=0,lives=3,coins=0,level=1,progress=0,mode='adventure',eventAt=0,eventActive='',jumpV=0,onGround=true,clownShown=false;
+const $=s=>document.querySelector(s);function announce(t){$('#notice').textContent=t;setTimeout(()=>{if($('#notice').textContent===t)$('#notice').textContent=''},1900)}
+function speak(t){$('#clownText').textContent=t;$('#clown').style.display='block';clown.visible=true;clown.position.z=player.position.z-5;clown.position.x=Math.sin(Date.now()/300)*1.5;setTimeout(()=>{$('#clown').style.display='none';clown.visible=false},4200)}
+function reset(){player.position.set(0,0,5);lives=3;coins=0;progress=0;$('#lives').textContent=lives;$('#coins').textContent=coins;$('#progress').style.width='0%';obstacles.forEach(o=>o.mesh.visible=true);collectibles.forEach(c=>c.visible=true)}
+function start(){mode=$('#mode').value;reset();running=true;startedAt=performance.now();eventAt=startedAt+6500;$('#overlay').classList.add('hidden');$('#controls').classList.remove('hidden');speak('Welcome, contestant! Reach the glowing gate. And whatever you do... expect the unexpected!')}
+$('#start').onclick=start;
+addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.code==='Space'){e.preventDefault();jump()}if(e.key==='Escape'&&running){running=false;$('#overlay').classList.remove('hidden');$('#start').textContent='RESUME'}});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+document.querySelectorAll('[data-key]').forEach(b=>{let k=b.dataset.key.toLowerCase();b.addEventListener('pointerdown',e=>{e.preventDefault();keys[k]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>keys[k]=false))});
+$('#jump').addEventListener('pointerdown',jump);function jump(){if(running&&onGround){jumpV=8.5;onGround=false}}
+function hit(){lives--;$('#lives').textContent=lives;player.position.z+=2;announce('TRAP! Watch your step!');player.rotation.z=1.2;setTimeout(()=>player.rotation.z=0,250);if(lives<=0){running=false;$('#overlay').classList.remove('hidden');$('#start').textContent='TRY AGAIN';document.querySelector('.subtitle').textContent='The Ringmaster wins this round. Ready for another try?'}}
+function randomEvent(){let events=['BLACKOUT! The lights are shifting!','DOUBLE TROUBLE! Two traps activated!','COIN STORM! Grab the bonus!','THE FLOOR IS MOVING!','RINGMASTER SAYS: CHANGE LANES!'];let e=events[Math.floor(Math.random()*events.length)];announce(e);if(Math.random()<.5)speak(e);eventActive=e;eventAt=performance.now()+6500;if(e.includes('COIN')){for(let i=0;i<5;i++){let c=new THREE.Mesh(new THREE.TorusGeometry(.35,.13,8,16),gold);c.position.set((Math.random()-.5)*10,1.4,player.position.z-12-Math.random()*15);scene.add(c);collectibles.push(c)}}}
+function update(t,dt){if(!running)return;let speed=mode==='survival'?10:mode==='challenge'?9:7.5;let dx=(keys['arrowright']||keys['d']?1:0)-(keys['arrowleft']||keys['a']?1:0);let dz=(keys['arrowdown']||keys['s']?1:0)-(keys['arrowup']||keys['w']?1:0);
+player.position.x=THREE.MathUtils.clamp(player.position.x+dx*dt*7,-6.8,6.8);player.position.z-=speed*dt;player.position.z+=dz*dt*speed*.7;
+if(!onGround){player.position.y+=jumpV*dt;jumpV-=19*dt;if(player.position.y<=0){player.position.y=0;jumpV=0;onGround=true}}
+player.rotation.y=THREE.MathUtils.damp(player.rotation.y,-dx*.22,8,dt);body.rotation.z=Math.sin(t*.012)*.08;player.position.y+=onGround?Math.sin(t*.012)*.035:0;
+camera.position.lerp(new THREE.Vector3(player.position.x*.35,5.3,player.position.z+9.5),.08);camera.lookAt(player.position.x*.3,1,player.position.z-5);
+pink.position.set(-5,4,player.position.z-8);blue.position.set(5,3,player.position.z-18);
+obstacles.forEach(o=>{let m=o.mesh;m.position.x=o.baseX+Math.sin(t*.002+o.phase)*(o.kind===1?2.3:0.7);m.rotation.x+=dt*(o.kind===0?2:1);m.rotation.y+=dt*2;if(Math.abs(m.position.z-player.position.z)<1.25&&Math.abs(m.position.x-player.position.x)<1.15&&player.position.y<1.2){m.position.z-=5;hit()}});
+collectibles.forEach(c=>{if(!c.visible)return;c.rotation.x+=dt*2;c.rotation.y+=dt*3;if(Math.abs(c.position.z-player.position.z)<1.2&&Math.abs(c.position.x-player.position.x)<1){c.visible=false;coins++;$('#coins').textContent=coins}});
+let p=THREE.MathUtils.clamp((5-player.position.z)/93*100,0,100);$('#progress').style.width=p+'%';$('#timer').textContent=Math.floor((t-startedAt)/1000);if(t>eventAt)randomEvent();
+if(mode==='survival'&&player.position.z<-85){player.position.z=5;level++;$('#level').textContent=level;speak('Another round! The surprises get wilder!');obstacles.forEach(o=>o.mesh.visible=true)}
+if(player.position.z<-85&&mode!=='survival'){running=false;$('#overlay').classList.remove('hidden');$('#start').textContent='PLAY AGAIN';document.querySelector('.subtitle').textContent='ESCAPE COMPLETE! You collected '+coins+' coins. The Ringmaster is impressed!';speak('You escaped! But the carnival remembers you...') }
+clown.rotation.y=Math.sin(t*.003)*.3;clown.position.y=Math.sin(t*.006)*.15;
+}
+function loop(t){requestAnimationFrame(loop);let dt=Math.min((t-last)/1000,.04)||0;last=t;update(t,dt);renderer.render(scene,camera)}requestAnimationFrame(loop);
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
+</script>
+</body></html>
